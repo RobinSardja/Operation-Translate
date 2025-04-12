@@ -4,6 +4,31 @@ import 'package:flutter/material.dart';
 
 import 'package:google_generative_ai/google_generative_ai.dart';
 
+enum Difficulty {
+  newRecruit,
+  specialAgent,
+  superSpy;
+
+  @override
+  String toString() {
+    switch( this ) {
+      case Difficulty.newRecruit:
+        return "New Recruit";
+      case Difficulty.specialAgent:
+        return "Special Agent";
+      case Difficulty.superSpy:
+        return "Super Spy";
+    }
+  }
+}
+
+class Record {
+  final String topic;
+  final Difficulty difficulty;
+
+  Record( this.topic, this.difficulty );
+}
+
 class Records extends StatefulWidget {
   const Records({super.key});
 
@@ -12,6 +37,12 @@ class Records extends StatefulWidget {
 }
 
 class _RecordsState extends State<Records> {
+  final temp = [
+    Record( "Ordering Food", Difficulty.newRecruit ),
+    Record( "Weekend Plans", Difficulty.specialAgent ),
+    Record( "Meeting Setup", Difficulty.superSpy )
+  ];
+
   static const apiKey = String.fromEnvironment( "gemini", defaultValue: "none" );
   String output = "Click the button above to generate!";
 
@@ -29,39 +60,36 @@ class _RecordsState extends State<Records> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        ListTile(
+    return ListView.builder(
+      itemBuilder: ( context, index ) {
+        final curr = temp[index];
+        return ListTile(
           leading: Icon( Icons.folder ),
-          onTap: () { Navigator.push( context, MaterialPageRoute( builder: (context) => Decipher() ) ); },
-          title: Text( "New Record: Meeting Setup" ),
-          subtitle: Text( "Difficulty: New Recruit" )
-        ),
-        ListTile(
-          leading: Icon( Icons.folder ),
-          onTap: () { Navigator.push( context, MaterialPageRoute( builder: (context) => Decipher() ) ); },
-          title: Text( "New Record: Package Handover" ),
-          subtitle: Text( "Difficulty: Field Operative" )
-        ),
-        ListTile(
-          leading: Icon( Icons.folder ),
-          onTap: () { Navigator.push( context, MaterialPageRoute( builder: (context) => Decipher() ) ); },
-          title: Text( "New Record: Sales Pitch" ),
-          subtitle: Text( "Difficulty: Special Agent" )
-        ),
-        ListTile(
-          leading: Icon( Icons.folder ),
-          onTap: () { Navigator.push( context, MaterialPageRoute( builder: (context) => Decipher() ) ); },
-          title: Text( "New Record: Business Deal" ),
-          subtitle: Text( "Difficulty: Super Spy" )
-        )
-      ]
+          onTap: () => Navigator.push(
+            context, MaterialPageRoute(
+              builder: (context) => Decipher(
+                difficulty: curr.difficulty, topic: curr.topic
+              )
+            )
+          ),
+          title: Text( "New Record: ${curr.topic}" ),
+          subtitle: Text( "Difficulty: ${curr.difficulty}" )
+        );
+      },
+      itemCount: temp.length
     );
   }
 }
 
 class Decipher extends StatefulWidget {
-  const Decipher({super.key});
+  const Decipher({
+    super.key,
+    required this.difficulty,
+    required this.topic
+  });
+
+  final Difficulty difficulty;
+  final String topic;
 
   @override
   State<Decipher> createState() => _DecipherState();
