@@ -1,20 +1,68 @@
 import 'package:flutter/material.dart';
 
+import 'profile.dart';
+import 'records.dart';
+import 'settings.dart';
+
 void main() {
   runApp(const MainApp());
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
   @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  int currPage = 1;
+  PageController pageController = PageController( initialPage: 1 );
+
+  @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
+        appBar: AppBar(
+          title: Text( "Operation Translate" )
         ),
+        body: PageView(
+          controller: pageController,
+          onPageChanged: (newPage) => setState( () => currPage = newPage ),
+          children: [
+            Profile(),
+            Records(),
+            Settings()
+          ]
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: currPage,
+          onTap: (newPage) {
+            setState( () => currPage = newPage );
+            pageController.jumpToPage(currPage);
+          },
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon( Icons.person ),
+              label: "Profile"
+            ),
+            BottomNavigationBarItem(
+              icon: Icon( Icons.perm_media ),
+              label: "Records"
+            ),
+            BottomNavigationBarItem(
+              icon: Icon( Icons.settings ),
+              label: "Settings"
+            )
+          ]
+        )
       ),
+      theme: ThemeData.dark().copyWith(
+        appBarTheme: AppBarTheme(
+          centerTitle: true
+        )
+      )
     );
   }
 }
