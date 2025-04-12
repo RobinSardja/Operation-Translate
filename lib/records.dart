@@ -113,7 +113,7 @@ class _DecipherState extends State<Decipher> {
   bool gettingConvo = true;
   bool showTimer = false;
   late Timer timer;
-  FlutterTts tts = FlutterTts();
+  final tts = FlutterTts();
 
   String formatTime() {
     final minutes = elapsedTime.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -146,17 +146,16 @@ class _DecipherState extends State<Decipher> {
     }
 
     setState( () => gettingConvo = false );
-    speakWholeConvo();
+    speakConvo(0);
   }
 
-   void speakWholeConvo() async {
-    currSentence = 0;
-    bool firstVoice = true;
+   void speakConvo( int start ) async {    
+    setState( () => currSentence = start );
+
     final voices = await tts.getVoices;
 
     while( currSentence < convo.length ) {
-      await tts.setVoice( Map<String, String>.from( voices[ firstVoice ? 4 : 5 ] ) );
-      firstVoice = !firstVoice;
+      await tts.setVoice( Map<String, String>.from( voices[ currSentence % 2 == 0 ? 4 : 5 ] ) );
       await tts.awaitSpeakCompletion(true);
       await tts.speak( convo[currSentence] );
       setState( () => currSentence++ );
@@ -173,22 +172,22 @@ class _DecipherState extends State<Decipher> {
   void initState() {
     super.initState();
 
-    startStopwatch();
-    final prompt = """
+    getConvo(
+"""
 Create a conversation between Bea and Jay about ${widget.topic}.
 Start off with societally expected formalities.
 Use basic conversational language.
 Display each sentence in ${widget.foreignLanguage} in square brackets like so:
-Bea: [sentence]
-Jay: [sentence]
-""";
-
-    getConvo(prompt);
+Jay: [${widget.foreignLanguage} sentence]
+Bea: [${widget.foreignLanguage} sentence]
+"""
+    );
+    startStopwatch();
   }
 
   @override
   void dispose() async {
-    if( timer.isActive ) timer.cancel();
+    timer.cancel();
     await tts.stop();
 
     super.dispose();
@@ -235,6 +234,11 @@ Jay: [sentence]
       ) : ListView(
         children: convo.asMap().entries.map(
           (entry) => ListTile(
+            onTap: () async {
+              await tts.stop();
+              speakConvo( entry.key );
+              // TODO: bug
+            },
             selected: entry.key == currSentence,
             title: Text( entry.value, textAlign: TextAlign.center )
           )
