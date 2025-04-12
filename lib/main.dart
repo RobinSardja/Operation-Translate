@@ -46,7 +46,7 @@ class _MainAppState extends State<MainApp> {
           onPageChanged: (newPage) => setState( () => currPage = newPage ),
           children: [
             Profile(),
-            Records(),
+            Records( settings: widget.settings ),
             Settings( settings: widget.settings )
           ]
         ),

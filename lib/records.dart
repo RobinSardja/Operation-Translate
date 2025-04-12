@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum Difficulty {
   newRecruit,
@@ -30,7 +31,12 @@ class Record {
 }
 
 class Records extends StatefulWidget {
-  const Records({super.key});
+  const Records({
+    super.key,
+    required this.settings
+  });
+
+  final SharedPreferences settings;
 
   @override
   State<Records> createState() => _RecordsState();
@@ -43,19 +49,15 @@ class _RecordsState extends State<Records> {
     Record( "Meeting Setup", Difficulty.superSpy )
   ];
 
-  static const apiKey = String.fromEnvironment( "gemini", defaultValue: "none" );
-  String output = "Click the button above to generate!";
+  late String foreignLanguage;
+  late String nativeLanguage;
 
-  Future<String> pipe( String prompt ) async {
-    final model = GenerativeModel(
-        model: 'gemini-1.5-flash-latest',
-        apiKey: apiKey
-    );
+  @override
+  void initState() {
+    super.initState();
 
-    final content = [ Content.text(prompt) ];
-    final response = await model.generateContent(content);
-
-    return response.text ?? "ERROR";
+    foreignLanguage = widget.settings.getString( "foreignLanguage" ) ?? "spanish";
+    nativeLanguage = widget.settings.getString( "nativeLanguage" ) ?? "english";
   }
 
   @override
@@ -68,7 +70,10 @@ class _RecordsState extends State<Records> {
           onTap: () => Navigator.push(
             context, MaterialPageRoute(
               builder: (context) => Decipher(
-                difficulty: curr.difficulty, topic: curr.topic
+                difficulty: curr.difficulty,
+                foreignLanguage: foreignLanguage,
+                nativeLanguage: nativeLanguage,
+                topic: curr.topic
               )
             )
           ),
@@ -85,10 +90,14 @@ class Decipher extends StatefulWidget {
   const Decipher({
     super.key,
     required this.difficulty,
+    required this.foreignLanguage,
+    required this.nativeLanguage,
     required this.topic
   });
 
   final Difficulty difficulty;
+  final String foreignLanguage;
+  final String nativeLanguage;
   final String topic;
 
   @override
@@ -96,6 +105,7 @@ class Decipher extends StatefulWidget {
 }
 
 class _DecipherState extends State<Decipher> {
+  static const apiKey = String.fromEnvironment( "gemini", defaultValue: "none" );
   Duration elapsedTime = Duration.zero;
   bool showTimer = false;
   late Timer timer;
@@ -106,6 +116,18 @@ class _DecipherState extends State<Decipher> {
     final milliseconds = ( elapsedTime.inMilliseconds.remainder(1000) / 10 ).toStringAsFixed(0).padLeft(2, '0');
 
     return "$minutes:$seconds:$milliseconds";
+  }
+
+  Future<String> pipe( String prompt ) async {
+    final model = GenerativeModel(
+        model: 'gemini-1.5-flash-latest',
+        apiKey: apiKey
+    );
+
+    final content = [ Content.text(prompt) ];
+    final response = await model.generateContent(content);
+
+    return response.text ?? "ERROR";
   }
 
   void startStopwatch() {
