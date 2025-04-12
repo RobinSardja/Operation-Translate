@@ -69,7 +69,12 @@ class _MainAppState extends State<MainApp> {
           ]
         )
       ),
-      theme: ThemeData.dark().copyWith(
+      theme: ThemeData.light().copyWith(
+        appBarTheme: AppBarTheme(
+          centerTitle: true
+        )
+      ),
+      darkTheme: ThemeData.dark().copyWith(
         appBarTheme: AppBarTheme(
           centerTitle: true
         )
