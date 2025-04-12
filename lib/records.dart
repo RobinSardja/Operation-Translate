@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -56,7 +57,7 @@ class _RecordsState extends State<Records> {
   void initState() {
     super.initState();
 
-    foreignLanguage = widget.settings.getString( "foreignLanguage" ) ?? "spanish";
+    foreignLanguage = widget.settings.getString( "foreignLanguage" ) ?? "chinese";
     nativeLanguage = widget.settings.getString( "nativeLanguage" ) ?? "english";
   }
 
@@ -106,9 +107,13 @@ class Decipher extends StatefulWidget {
 
 class _DecipherState extends State<Decipher> {
   static const apiKey = String.fromEnvironment( "gemini", defaultValue: "none" );
+  List<String> convo = [];
+  int currSentence = -1;
   Duration elapsedTime = Duration.zero;
+  bool gettingConvo = true;
   bool showTimer = false;
   late Timer timer;
+  FlutterTts tts = FlutterTts();
 
   String formatTime() {
     final minutes = elapsedTime.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -118,7 +123,7 @@ class _DecipherState extends State<Decipher> {
     return "$minutes:$seconds:$milliseconds";
   }
 
-  Future<String> pipe( String prompt ) async {
+  void getConvo( String prompt ) async {
     final model = GenerativeModel(
         model: 'gemini-1.5-flash-latest',
         apiKey: apiKey
@@ -127,7 +132,35 @@ class _DecipherState extends State<Decipher> {
     final content = [ Content.text(prompt) ];
     final response = await model.generateContent(content);
 
-    return response.text ?? "ERROR";
+    final lines = response.text!.split('\n');
+    final re = RegExp( r'\[(.*?)\]' );
+
+    convo.clear();
+    for( String line in lines ) {
+      if( line.startsWith( "Bea: " ) || line.startsWith( "Jay: " ) ) {
+        final matches = re.allMatches(line);
+        for( Match match in matches ) {
+          convo.add( match.group(1)! );
+        }
+      }
+    }
+
+    setState( () => gettingConvo = false );
+    speakWholeConvo();
+  }
+
+   void speakWholeConvo() async {
+    currSentence = 0;
+    bool firstVoice = true;
+    final voices = await tts.getVoices;
+
+    while( currSentence < convo.length ) {
+      await tts.setVoice( Map<String, String>.from( voices[ firstVoice ? 4 : 5 ] ) );
+      firstVoice = !firstVoice;
+      await tts.awaitSpeakCompletion(true);
+      await tts.speak( convo[currSentence] );
+      setState( () => currSentence++ );
+    }
   }
 
   void startStopwatch() {
@@ -141,11 +174,22 @@ class _DecipherState extends State<Decipher> {
     super.initState();
 
     startStopwatch();
+    final prompt = """
+Create a conversation between Bea and Jay about ${widget.topic}.
+Start off with societally expected formalities.
+Use basic conversational language.
+Display each sentence in ${widget.foreignLanguage} in square brackets like so:
+Bea: [sentence]
+Jay: [sentence]
+""";
+
+    getConvo(prompt);
   }
 
   @override
-  void dispose() {
+  void dispose() async {
     if( timer.isActive ) timer.cancel();
+    await tts.stop();
 
     super.dispose();
   }
@@ -186,7 +230,16 @@ class _DecipherState extends State<Decipher> {
         automaticallyImplyLeading: false,
         title: Text( showTimer ? formatTime() : "Deciphering Record" )
       ),
-      body: Center( child: Text( "Decipher" ) )
+      body: gettingConvo ? Center(
+        child: CircularProgressIndicator.adaptive()
+      ) : ListView(
+        children: convo.asMap().entries.map(
+          (entry) => ListTile(
+            selected: entry.key == currSentence,
+            title: Text( entry.value, textAlign: TextAlign.center )
+          )
+        ).toList()
+      )
     );
   }
 }

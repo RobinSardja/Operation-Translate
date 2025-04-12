@@ -22,7 +22,7 @@ class _SettingsState extends State<Settings> {
   void initState() {
     super.initState();
 
-    foreignLanguage = widget.settings.getString( "foreignLanguage" ) ?? "spanish";
+    foreignLanguage = widget.settings.getString( "foreignLanguage" ) ?? "chinese";
     nativeLanguage = widget.settings.getString( "nativeLanguage" ) ?? "english";
   }
 
@@ -41,8 +41,8 @@ class _SettingsState extends State<Settings> {
                     value: "english"
                   ),
                   DropdownMenuEntry(
-                    label: "Spanish",
-                    value: "spanish"
+                    label: "Chinese",
+                    value: "chinese"
                   )
                 ],
                 initialSelection: foreignLanguage,
@@ -59,8 +59,8 @@ class _SettingsState extends State<Settings> {
                     value: "english"
                   ),
                   DropdownMenuEntry(
-                    label: "Spanish",
-                    value: "spanish"
+                    label: "Chinese",
+                    value: "chinese"
                   )
                 ],
                 initialSelection: nativeLanguage,
