@@ -111,6 +111,7 @@ class _DecipherState extends State<Decipher> {
   int currSentence = -1;
   Duration elapsedTime = Duration.zero;
   bool gettingConvo = true;
+  bool isSpeaking = false;
   bool showTimer = false;
   late Timer timer;
   final tts = FlutterTts();
@@ -145,21 +146,19 @@ class _DecipherState extends State<Decipher> {
       }
     }
 
-    setState( () => gettingConvo = false );
-    speakConvo(0);
+    gettingConvo = false;
   }
 
-   void speakConvo( int start ) async {    
-    setState( () => currSentence = start );
+   void speakSentence( int i ) async {    
+    currSentence = i;
 
     final voices = await tts.getVoices;
 
-    while( currSentence < convo.length ) {
-      await tts.setVoice( Map<String, String>.from( voices[ currSentence % 2 == 0 ? 4 : 5 ] ) );
-      await tts.awaitSpeakCompletion(true);
-      await tts.speak( convo[currSentence] );
-      setState( () => currSentence++ );
-    }
+    await tts.setVoice( Map<String, String>.from( voices[ currSentence % 2 == 0 ? 4 : 5 ] ) );
+    await tts.awaitSpeakCompletion(true);
+    await tts.speak( convo[currSentence] );
+
+    currSentence = -1;
   }
 
   void startStopwatch() {
@@ -171,6 +170,9 @@ class _DecipherState extends State<Decipher> {
   @override
   void initState() {
     super.initState();
+
+    tts.setStartHandler( () => setState( () => isSpeaking = true ) );
+    tts.setCompletionHandler( () => setState( () => isSpeaking = false ) );
 
     getConvo(
 """
@@ -234,11 +236,15 @@ Bea: [${widget.foreignLanguage} sentence]
       ) : ListView(
         children: convo.asMap().entries.map(
           (entry) => ListTile(
-            onTap: () async {
-              await tts.stop();
-              speakConvo( entry.key );
-              // TODO: bug
-            },
+            onTap: () => isSpeaking ?
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text( "Please wait until speaking ends" ),
+                action: SnackBarAction( label: "OK", onPressed: () {} ),
+                behavior: SnackBarBehavior.floating,
+              )
+            )
+            : speakSentence( entry.key ),
             selected: entry.key == currSentence,
             title: Text( entry.value, textAlign: TextAlign.center )
           )
