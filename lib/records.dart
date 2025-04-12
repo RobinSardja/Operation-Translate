@@ -27,20 +27,6 @@ class _RecordsState extends State<Records> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        ListTile(
-          title: FloatingActionButton(
-            onPressed: () async {
-              output = await pipe( "Hello! How are you?" );
-              setState(() {});
-            }
-          )
-        ),
-        ListTile(
-          title: Text( output )
-        )
-      ]
-    );
+    return Placeholder();
   }
 }
