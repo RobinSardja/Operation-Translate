@@ -287,22 +287,39 @@ Format each question with the question in square brackets, each of the 4 answer 
       ),
       body: isGenerating ? Center(
         child: CircularProgressIndicator.adaptive()
-      ) : ListView(
-        children: convo.asMap().entries.map(
-          (entry) => ListTile(
-            onTap: () => isSpeaking ?
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text( "Please wait until speaking ends" ),
-                action: SnackBarAction( label: "OK", onPressed: () {} ),
-                behavior: SnackBarBehavior.floating,
-              )
-            )
-            : speakSentence( entry.key ),
-            selected: entry.key == currSentence,
-            title: Text( entry.value, textAlign: TextAlign.center )
+      ) : Column(
+        children: [
+          Expanded(
+            flex: 1,
+            child: ListView(
+              children: convo.asMap().entries.map(
+                (entry) => ListTile(
+                  onTap: () => isSpeaking ?
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text( "Please wait until speaking ends" ),
+                      action: SnackBarAction( label: "OK", onPressed: () {} ),
+                      behavior: SnackBarBehavior.floating,
+                    )
+                  )
+                  : speakSentence( entry.key ),
+                  selected: entry.key == currSentence,
+                  title: Text( entry.value, textAlign: TextAlign.center )
+                )
+              ).toList()
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: ListView(
+              children: questions.asMap().entries.map(
+                (entry) => ListTile(
+                  title: Text( entry.value.question )
+                )
+              ).toList()
+            ),
           )
-        ).toList()
+        ] 
       )
     );
   }
