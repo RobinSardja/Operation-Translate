@@ -25,4 +25,6 @@ flutter_launcher_icons:
   ios: true
 
 flutter:
+  assets:
+    - assets/negative.png
   uses-material-design: true

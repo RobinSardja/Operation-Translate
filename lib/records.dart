@@ -88,6 +88,7 @@ class _RecordsState extends State<Records> {
                 difficulty: curr.difficulty,
                 foreignLanguage: foreignLanguage,
                 nativeLanguage: nativeLanguage,
+                settings: widget.settings,
                 speechPitch: speechPitch,
                 speechRate: speechRate,
                 speechVolume: speechVolume,
@@ -110,6 +111,7 @@ class Decipher extends StatefulWidget {
     required this.difficulty,
     required this.foreignLanguage,
     required this.nativeLanguage,
+    required this.settings,
     required this.speechPitch,
     required this.speechRate,
     required this.speechVolume,
@@ -119,6 +121,7 @@ class Decipher extends StatefulWidget {
   final Difficulty difficulty;
   final String foreignLanguage;
   final String nativeLanguage;
+  final SharedPreferences settings;
   final double speechPitch;
   final double speechRate;
   final double speechVolume;
@@ -279,7 +282,7 @@ Format each question with the question in square brackets, each of the 4 answer 
               builder: (context) => AlertDialog(
                 actions: [
                   TextButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.pop(context);
                       Navigator.pop(context);
 
@@ -289,6 +292,12 @@ Format each question with the question in square brackets, each of the 4 answer 
                           score++;
                         }
                       }
+
+                      int temp1 = widget.settings.getInt( "questionsCorrect" ) ?? 0;
+                      int temp2 = widget.settings.getInt( "questionsAttempted" ) ?? 0;
+
+                      widget.settings.setInt( "questionsCorrect", temp1 + score );
+                      widget.settings.setInt( "questionsAttempted", temp2 + 5 );
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

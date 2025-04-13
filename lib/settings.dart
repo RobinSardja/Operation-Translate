@@ -109,6 +109,10 @@ class _SettingsState extends State<Settings> {
             onChangeEnd: (value) => widget.settings.setDouble( "speechVolume", value ),
             value: speechVolume
           )
+        ),
+        TextButton(
+          onPressed: () {},
+          child: Text( "Tutorial" )
         )
       ]
     );
