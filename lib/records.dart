@@ -238,12 +238,6 @@ Format each question with the question in square brackets, each of the 4 answer 
     currSentence = -1;
   }
 
-  void startStopwatch() {
-    timer = Timer.periodic( Duration( milliseconds: 10 ), (timer) {
-      setState( () => elapsedTime += Duration( milliseconds: 10 ) );
-    });
-  }
-
   @override
   void initState() {
     super.initState();
@@ -260,7 +254,10 @@ Format each question with the question in square brackets, each of the 4 answer 
     tts.setCompletionHandler( () => setState( () => isSpeaking = false ) );
 
     getConvoAndQuestions();
-    startStopwatch();
+    
+    timer = Timer.periodic( Duration( milliseconds: 10 ), (timer) {
+      setState( () => elapsedTime += Duration( milliseconds: 10 ) );
+    });
   }
 
   @override

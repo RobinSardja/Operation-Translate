@@ -54,7 +54,7 @@ class _MainAppState extends State<MainApp> {
           currentIndex: currPage,
           onTap: (newPage) {
             setState( () => currPage = newPage );
-            pageController.jumpToPage(currPage);
+            pageController.jumpToPage( currPage );
           },
           items: [
             BottomNavigationBarItem(

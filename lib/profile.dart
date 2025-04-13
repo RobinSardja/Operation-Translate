@@ -31,7 +31,7 @@ class _ProfileState extends State<Profile> {
     return ListView(
       children: [
         ListTile(
-          title: Text( "Welcome back, Agent Sardja", textAlign: TextAlign.center )
+          title: Text( "Welcome back, Recruit Sardja", textAlign: TextAlign.center )
         ),
         Image.asset( "assets/negative.png" ),
         ListTile(

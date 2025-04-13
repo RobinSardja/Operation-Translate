@@ -37,82 +37,70 @@ class _SettingsState extends State<Settings> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        ListTile(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              DropdownMenu(
-                dropdownMenuEntries: [
-                  DropdownMenuEntry(
-                    label: "English",
-                    value: "english"
-                  ),
-                  DropdownMenuEntry(
-                    label: "Chinese",
-                    value: "chinese"
-                  )
-                ],
-                initialSelection: foreignLanguage,
-                label: Text( "Foreign language" ),
-                onSelected: (value) {
-                  setState( () => foreignLanguage = value! );
-                  widget.settings.setString( "foreignLanguage", foreignLanguage );
-                }
-              ),
-              DropdownMenu(
-                dropdownMenuEntries: [
-                  DropdownMenuEntry(
-                    label: "English",
-                    value: "english"
-                  ),
-                  DropdownMenuEntry(
-                    label: "Chinese",
-                    value: "chinese"
-                  )
-                ],
-                initialSelection: nativeLanguage,
-                label: Text( "Native language" ),
-                onSelected: (value) {
-                  setState( () => nativeLanguage = value! );
-                  widget.settings.setString( "nativeLanguage", nativeLanguage );
-                }
-              )
-            ]
-          )
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            DropdownMenu(
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  label: "English",
+                  value: "english"
+                ),
+                DropdownMenuEntry(
+                  label: "Chinese",
+                  value: "chinese"
+                )
+              ],
+              initialSelection: foreignLanguage,
+              label: Text( "Foreign language" ),
+              onSelected: (value) {
+                setState( () => foreignLanguage = value! );
+                widget.settings.setString( "foreignLanguage", foreignLanguage );
+              }
+            ),
+            DropdownMenu(
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  label: "English",
+                  value: "english"
+                ),
+                DropdownMenuEntry(
+                  label: "Chinese",
+                  value: "chinese"
+                )
+              ],
+              initialSelection: nativeLanguage,
+              label: Text( "Native language" ),
+              onSelected: (value) {
+                setState( () => nativeLanguage = value! );
+                widget.settings.setString( "nativeLanguage", nativeLanguage );
+              }
+            )
+          ]
         ),
         Text( "Speech pitch: $speechPitch", textAlign: TextAlign.center ),
-        ListTile(
-          title: Slider(
-            divisions: 20,
-            max: 2.0,
-            onChanged: (value) => setState( () => speechPitch = value ),
-            onChangeEnd: (value) => widget.settings.setDouble( "speechPitch", value ),
-            value: speechPitch
-          )
+        Slider(
+          divisions: 20,
+          max: 2.0,
+          onChanged: (value) => setState( () => speechPitch = value ),
+          onChangeEnd: (value) => widget.settings.setDouble( "speechPitch", value ),
+          value: speechPitch
         ),
         Text( "Speech rate: $speechRate", textAlign: TextAlign.center ),
-        ListTile(
-          title: Slider(
-            divisions: 20,
-            max: 2.0,
-            onChanged: (value) => setState( () => speechRate = value ),
-            onChangeEnd: (value) => widget.settings.setDouble( "speechRate", value ),
-            value: speechRate
-          )
+        Slider(
+          divisions: 20,
+          max: 2.0,
+          onChanged: (value) => setState( () => speechRate = value ),
+          onChangeEnd: (value) => widget.settings.setDouble( "speechRate", value ),
+          value: speechRate
         ),
         Text( "Speech volume: $speechVolume", textAlign: TextAlign.center ),
-        ListTile(
-          title: Slider(
-            divisions: 20,
-            max: 2.0,
-            onChanged: (value) => setState( () => speechVolume = value ),
-            onChangeEnd: (value) => widget.settings.setDouble( "speechVolume", value ),
-            value: speechVolume
-          )
-        ),
-        TextButton(
-          onPressed: () {},
-          child: Text( "Tutorial" )
+        Slider(
+          divisions: 20,
+          max: 2.0,
+          onChanged: (value) => setState( () => speechVolume = value ),
+          onChangeEnd: (value) => widget.settings.setDouble( "speechVolume", value ),
+          value: speechVolume
         )
       ]
     );
