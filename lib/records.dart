@@ -125,6 +125,7 @@ class _DecipherState extends State<Decipher> {
   bool isGenerating = true;
   bool isSpeaking = false;
   List<MCQ> questions = [];
+  List<String?> selectedAnswers = [null, null, null, null, null];
   bool showTimer = false;
   late Timer timer;
   final tts = FlutterTts();
@@ -188,7 +189,7 @@ Format each question with the question in square brackets, each of the 4 answer 
 {Correct choice}
 """;
 
-    response =( await model.generateContent( [ Content.text( prompt ) ] ) ).text!;
+    response = ( await model.generateContent( [ Content.text( prompt ) ] ) ).text!;
     List<String> parts = response.split('\n\n');
 
     for( String part in parts ) {
@@ -259,7 +260,7 @@ Format each question with the question in square brackets, each of the 4 answer 
         ),
         actions: [
           IconButton(
-            icon: Icon( Icons.close ),
+            icon: Icon( Icons.check ),
             onPressed: () => showDialog(
               builder: (context) => AlertDialog(
                 actions: [
@@ -267,6 +268,21 @@ Format each question with the question in square brackets, each of the 4 answer 
                     onPressed: () {
                       Navigator.pop(context);
                       Navigator.pop(context);
+
+                      int score = 0;
+                      for( int i = 0; i < 5; i++ ) {
+                        if( selectedAnswers[i] == questions[i].correctAnswer ) {
+                          score++;
+                        }
+                      }
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text( "You scored $score/5 correct!" ),
+                          action: SnackBarAction( label: "OK", onPressed: () {} ),
+                          behavior: SnackBarBehavior.floating,
+                        )
+                      );
                     },
                     child: Text( "Yes" )
                   ),
@@ -275,8 +291,8 @@ Format each question with the question in square brackets, each of the 4 answer 
                     child: Text( "No" )
                   )
                 ],
-                content: Text( "Are you sure you want to quit?" ),
-                title: Text( "Quitting" )
+                content: Text( "Are you ready to submit?" ),
+                title: Text( "Submitting" )
               ),
               context: context
             )
@@ -313,8 +329,34 @@ Format each question with the question in square brackets, each of the 4 answer 
             flex: 1,
             child: ListView(
               children: questions.asMap().entries.map(
-                (entry) => ListTile(
-                  title: Text( entry.value.question )
+                (entry) => Column(
+                  children: [
+                    Center( child: Text( "(${entry.key + 1}) ${entry.value.question}" ) ),
+                    RadioListTile(
+                      groupValue: selectedAnswers[ entry.key ],
+                      onChanged: (value) => setState( () => selectedAnswers[ entry.key ] = value ),
+                      title: Text( entry.value.options[0] ),
+                      value: entry.value.options[0]
+                    ),
+                    RadioListTile(
+                      groupValue: selectedAnswers[ entry.key ],
+                      onChanged: (value) => setState( () => selectedAnswers[ entry.key ] = value ),
+                      title: Text( entry.value.options[1] ),
+                      value: entry.value.options[1]
+                    ),
+                    RadioListTile(
+                      groupValue: selectedAnswers[ entry.key ],
+                      onChanged: (value) => setState( () => selectedAnswers[ entry.key ] = value ),
+                      title: Text( entry.value.options[2] ),
+                      value: entry.value.options[2]
+                    ),
+                    RadioListTile(
+                      groupValue: selectedAnswers[ entry.key ],
+                      onChanged: (value) => setState( () => selectedAnswers[ entry.key ] = value ),
+                      title: Text( entry.value.options[3] ),
+                      value: entry.value.options[3]
+                    )
+                  ]
                 )
               ).toList()
             ),
