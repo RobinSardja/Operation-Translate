@@ -86,12 +86,7 @@ class _RecordsState extends State<Records> {
             context, MaterialPageRoute(
               builder: (context) => Decipher(
                 difficulty: curr.difficulty,
-                foreignLanguage: foreignLanguage,
-                nativeLanguage: nativeLanguage,
                 settings: widget.settings,
-                speechPitch: speechPitch,
-                speechRate: speechRate,
-                speechVolume: speechVolume,
                 topic: curr.topic
               )
             )
@@ -109,22 +104,12 @@ class Decipher extends StatefulWidget {
   const Decipher({
     super.key,
     required this.difficulty,
-    required this.foreignLanguage,
-    required this.nativeLanguage,
     required this.settings,
-    required this.speechPitch,
-    required this.speechRate,
-    required this.speechVolume,
     required this.topic
   });
 
   final Difficulty difficulty;
-  final String foreignLanguage;
-  final String nativeLanguage;
   final SharedPreferences settings;
-  final double speechPitch;
-  final double speechRate;
-  final double speechVolume;
   final String topic;
 
   @override
@@ -136,11 +121,18 @@ class _DecipherState extends State<Decipher> {
   List<String> convo = [];
   int currSentence = -1;
   Duration elapsedTime = Duration.zero;
+  late String foreignLanguage;
   bool isGenerating = true;
   bool isSpeaking = false;
+  late String nativeLanguage;
   List<MCQ> questions = [];
+  late int questionsAttempted;
+  late int questionsCorrect;
   List<String?> selectedAnswers = [null, null, null, null, null];
   bool showTimer = false;
+  late double speechPitch;
+  late double speechRate;
+  late double speechVolume;
   late Timer timer;
   final tts = FlutterTts();
 
@@ -153,39 +145,40 @@ class _DecipherState extends State<Decipher> {
   }
 
   void getConvoAndQuestions() async {
-    final model = GenerativeModel(
+    try {
+      final model = GenerativeModel(
         model: 'gemini-1.5-flash-latest',
         apiKey: apiKey
-    );
+      );
 
-    String prompt =
+      String prompt =
 """
 Create a conversation between Bea and Jay about ${widget.topic}.
 Start off with societally expected formalities.
 Use basic conversational language.
-Display each sentence in ${widget.foreignLanguage} in square brackets like so:
-Jay: [${widget.foreignLanguage} sentence]
-Bea: [${widget.foreignLanguage} sentence]
+Display each sentence in $foreignLanguage in square brackets like so:
+Jay: [$foreignLanguage sentence]
+Bea: [$foreignLanguage sentence]
 """;
 
-    String response =( await model.generateContent( [ Content.text( prompt ) ] ) ).text!;
+      String response =( await model.generateContent( [ Content.text( prompt ) ] ) ).text!;
 
-    List<String> lines = response.split('\n');
-    RegExp re = RegExp( r'\[(.*?)\]' );
+      List<String> lines = response.split('\n');
+      RegExp re = RegExp( r'\[(.*?)\]' );
 
-    for( String line in lines ) {
-      if( line.startsWith( "Bea: " ) || line.startsWith( "Jay: " ) ) {
-        final matches = re.allMatches(line);
-        for( Match match in matches ) {
-          convo.add( match.group(1)! );
+      for( String line in lines ) {
+        if( line.startsWith( "Bea: " ) || line.startsWith( "Jay: " ) ) {
+          final matches = re.allMatches(line);
+          for( Match match in matches ) {
+            convo.add( match.group(1)! );
+          }
         }
       }
-    }
 
-    prompt = """
+      prompt = """
 $response
 
-Create 5 multiple choice questions about the conversation above in ${widget.nativeLanguage}.
+Create 5 multiple choice questions about the conversation above in $nativeLanguage.
 Format each question with the question in square brackets, each of the 4 answer choice in angle brackets, and the correct choice in curly braces, like so:
 [Question]
 <Answer choice>
@@ -202,28 +195,31 @@ Format each question with the question in square brackets, each of the 4 answer 
 {Correct choice}
 """;
 
-    response = ( await model.generateContent( [ Content.text( prompt ) ] ) ).text!;
-    List<String> parts = response.split('\n\n');
+      response = ( await model.generateContent( [ Content.text( prompt ) ] ) ).text!;
+      List<String> parts = response.split('\n\n');
 
-    for( String part in parts ) {
-      lines = part.split('\n');
-      String questionText = lines[0].substring( 1, lines[0].length - 1 );
+      for( String part in parts ) {
+        lines = part.split('\n');
+        String questionText = lines[0].substring( 1, lines[0].length - 1 );
 
-      List<String> options = [];
-      String correctAnswer = "";
+        List<String> options = [];
+        String correctAnswer = "";
 
-      for( int i = 1; i < lines.length; i++ ) {
-        if( lines[i].startsWith('<') && lines[i].endsWith('>') ) {
-          options.add( lines[i].substring( 1, lines[i].length - 1 ) );
-        } else if( lines[i].startsWith('{') && lines[i].endsWith('}') ) {
-          correctAnswer = lines[i].substring( 1, lines[i].length - 1 );
+        for( int i = 1; i < lines.length; i++ ) {
+          if( lines[i].startsWith('<') && lines[i].endsWith('>') ) {
+            options.add( lines[i].substring( 1, lines[i].length - 1 ) );
+          } else if( lines[i].startsWith('{') && lines[i].endsWith('}') ) {
+            correctAnswer = lines[i].substring( 1, lines[i].length - 1 );
+          }
         }
+
+        questions.add( MCQ( questionText, options, correctAnswer ) );
       }
 
-      questions.add( MCQ( questionText, options, correctAnswer ) );
+      isGenerating = false;
+    } catch(e) {
+      getConvoAndQuestions();
     }
-
-    isGenerating = false;
   }
 
   void speakSentence( int i ) async {    
@@ -231,9 +227,9 @@ Format each question with the question in square brackets, each of the 4 answer 
 
     final voices = await tts.getVoices;
 
-    await tts.setPitch( widget.speechPitch );
-    await tts.setSpeechRate( widget.speechRate );
-    await tts.setVolume( widget.speechVolume );
+    await tts.setPitch( speechPitch );
+    await tts.setSpeechRate( speechRate );
+    await tts.setVolume( speechVolume );
 
     await tts.setVoice( Map<String, String>.from( voices[ currSentence % 2 == 0 ? 4 : 5 ] ) );
     await tts.awaitSpeakCompletion( true );
@@ -251,6 +247,14 @@ Format each question with the question in square brackets, each of the 4 answer 
   @override
   void initState() {
     super.initState();
+
+    foreignLanguage = widget.settings.getString( "foreignLanguage" ) ?? "chinese";
+    nativeLanguage = widget.settings.getString( "nativeLanguage" ) ?? "english";
+    questionsAttempted = widget.settings.getInt( "questionsAttempted" ) ?? 0;
+    questionsCorrect = widget.settings.getInt( "questionsCorrect" ) ?? 0;
+    speechPitch = widget.settings.getDouble( "speechPitch" ) ?? 1.0;
+    speechRate = widget.settings.getDouble( "speechRate" ) ?? 0.5;
+    speechVolume = widget.settings.getDouble( "speechVolume" ) ?? 1.0;
 
     tts.setStartHandler( () => setState( () => isSpeaking = true ) );
     tts.setCompletionHandler( () => setState( () => isSpeaking = false ) );
@@ -293,11 +297,8 @@ Format each question with the question in square brackets, each of the 4 answer 
                         }
                       }
 
-                      int temp1 = widget.settings.getInt( "questionsCorrect" ) ?? 0;
-                      int temp2 = widget.settings.getInt( "questionsAttempted" ) ?? 0;
-
-                      widget.settings.setInt( "questionsCorrect", temp1 + score );
-                      widget.settings.setInt( "questionsAttempted", temp2 + 5 );
+                      widget.settings.setInt( "questionsCorrect", questionsCorrect + score );
+                      widget.settings.setInt( "questionsAttempted", questionsAttempted + 5 );
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
