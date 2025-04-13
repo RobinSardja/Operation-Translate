@@ -60,6 +60,9 @@ class _RecordsState extends State<Records> {
 
   late String foreignLanguage;
   late String nativeLanguage;
+  late double speechPitch;
+  late double speechRate;
+  late double speechVolume;
 
   @override
   void initState() {
@@ -67,6 +70,9 @@ class _RecordsState extends State<Records> {
 
     foreignLanguage = widget.settings.getString( "foreignLanguage" ) ?? "chinese";
     nativeLanguage = widget.settings.getString( "nativeLanguage" ) ?? "english";
+    speechPitch = widget.settings.getDouble( "speechPitch" ) ?? 1.0;
+    speechRate = widget.settings.getDouble( "speechRate" ) ?? 0.5;
+    speechVolume = widget.settings.getDouble( "speechVolume" ) ?? 1.0;
   }
 
   @override
@@ -82,6 +88,9 @@ class _RecordsState extends State<Records> {
                 difficulty: curr.difficulty,
                 foreignLanguage: foreignLanguage,
                 nativeLanguage: nativeLanguage,
+                speechPitch: speechPitch,
+                speechRate: speechRate,
+                speechVolume: speechVolume,
                 topic: curr.topic
               )
             )
@@ -101,12 +110,18 @@ class Decipher extends StatefulWidget {
     required this.difficulty,
     required this.foreignLanguage,
     required this.nativeLanguage,
+    required this.speechPitch,
+    required this.speechRate,
+    required this.speechVolume,
     required this.topic
   });
 
   final Difficulty difficulty;
   final String foreignLanguage;
   final String nativeLanguage;
+  final double speechPitch;
+  final double speechRate;
+  final double speechVolume;
   final String topic;
 
   @override
@@ -168,7 +183,6 @@ Bea: [${widget.foreignLanguage} sentence]
 $response
 
 Create 5 multiple choice questions about the conversation above in ${widget.nativeLanguage}.
-Ensure all content below is written in ${widget.nativeLanguage}.
 Format each question with the question in square brackets, each of the 4 answer choice in angle brackets, and the correct choice in curly braces, like so:
 [Question]
 <Answer choice>
@@ -213,6 +227,10 @@ Format each question with the question in square brackets, each of the 4 answer 
     currSentence = i;
 
     final voices = await tts.getVoices;
+
+    await tts.setPitch( widget.speechPitch );
+    await tts.setSpeechRate( widget.speechRate );
+    await tts.setVolume( widget.speechVolume );
 
     await tts.setVoice( Map<String, String>.from( voices[ currSentence % 2 == 0 ? 4 : 5 ] ) );
     await tts.awaitSpeakCompletion( true );

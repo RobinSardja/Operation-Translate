@@ -17,6 +17,9 @@ class Settings extends StatefulWidget {
 class _SettingsState extends State<Settings> {
   late String foreignLanguage;
   late String nativeLanguage;
+  late double speechPitch;
+  late double speechRate;
+  late double speechVolume;
 
   @override
   void initState() {
@@ -24,11 +27,15 @@ class _SettingsState extends State<Settings> {
 
     foreignLanguage = widget.settings.getString( "foreignLanguage" ) ?? "chinese";
     nativeLanguage = widget.settings.getString( "nativeLanguage" ) ?? "english";
+    speechPitch = widget.settings.getDouble( "speechPitch" ) ?? 1.0;
+    speechRate = widget.settings.getDouble( "speechRate" ) ?? 0.5;
+    speechVolume = widget.settings.getDouble( "speechVolume" ) ?? 1.0;
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         ListTile(
           title: Row(
@@ -71,6 +78,36 @@ class _SettingsState extends State<Settings> {
                 }
               )
             ]
+          )
+        ),
+        Text( "Speech pitch: $speechPitch", textAlign: TextAlign.center ),
+        ListTile(
+          title: Slider(
+            divisions: 20,
+            max: 2.0,
+            onChanged: (value) => setState( () => speechPitch = value ),
+            onChangeEnd: (value) => widget.settings.setDouble( "speechPitch", value ),
+            value: speechPitch
+          )
+        ),
+        Text( "Speech rate: $speechRate", textAlign: TextAlign.center ),
+        ListTile(
+          title: Slider(
+            divisions: 20,
+            max: 2.0,
+            onChanged: (value) => setState( () => speechRate = value ),
+            onChangeEnd: (value) => widget.settings.setDouble( "speechRate", value ),
+            value: speechRate
+          )
+        ),
+        Text( "Speech volume: $speechVolume", textAlign: TextAlign.center ),
+        ListTile(
+          title: Slider(
+            divisions: 20,
+            max: 2.0,
+            onChanged: (value) => setState( () => speechVolume = value ),
+            onChangeEnd: (value) => widget.settings.setDouble( "speechVolume", value ),
+            value: speechVolume
           )
         )
       ]
