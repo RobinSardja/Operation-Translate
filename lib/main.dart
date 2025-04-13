@@ -43,7 +43,7 @@ class _MainAppState extends State<MainApp> {
         ),
         body: PageView(
           controller: pageController,
-          onPageChanged: (newPage) => setState( () => currPage = newPage ),
+          onPageChanged: ( newPage ) => setState( () => currPage = newPage ),
           children: [
             Profile(),
             Records( settings: widget.settings ),

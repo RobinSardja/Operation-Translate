@@ -26,14 +26,10 @@ enum Difficulty {
 
 class MCQ {
   final String question;
-  final List<String> options;
-  final String correctAnswer;
+  final List<String> choices;
+  final String correct;
 
-  MCQ(
-    this.question,
-    this.options,
-    this.correctAnswer,
-  );
+  MCQ( this.question, this.choices, this.correct );
 }
 
 class Record {
@@ -131,9 +127,9 @@ class _DecipherState extends State<Decipher> {
   final tts = FlutterTts();
 
   String formatTime() {
-    final minutes = elapsedTime.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = elapsedTime.inSeconds.remainder(60).toString().padLeft(2, '0');
-    final milliseconds = ( elapsedTime.inMilliseconds.remainder(1000) / 10 ).toStringAsFixed(0).padLeft(2, '0');
+    final minutes = elapsedTime.inMinutes.remainder(60).toString().padLeft( 2, '0' );
+    final seconds = elapsedTime.inSeconds.remainder(60).toString().padLeft( 2, '0' );
+    final milliseconds = ( elapsedTime.inMilliseconds.remainder(1000) / 10 ).toStringAsFixed(0).padLeft( 2, '0' );
 
     return "$minutes:$seconds:$milliseconds";
   }
@@ -194,7 +190,7 @@ Format each question with the question in square brackets, each of the 4 answer 
 
     for( String part in parts ) {
       lines = part.split('\n');
-      String questionText = lines[0].substring(1, lines[0].length - 1);
+      String questionText = lines[0].substring( 1, lines[0].length - 1 );
 
       List<String> options = [];
       String correctAnswer = "";
@@ -219,7 +215,7 @@ Format each question with the question in square brackets, each of the 4 answer 
     final voices = await tts.getVoices;
 
     await tts.setVoice( Map<String, String>.from( voices[ currSentence % 2 == 0 ? 4 : 5 ] ) );
-    await tts.awaitSpeakCompletion(true);
+    await tts.awaitSpeakCompletion( true );
     await tts.speak( convo[currSentence] );
 
     currSentence = -1;
@@ -271,16 +267,16 @@ Format each question with the question in square brackets, each of the 4 answer 
 
                       int score = 0;
                       for( int i = 0; i < 5; i++ ) {
-                        if( selectedAnswers[i] == questions[i].correctAnswer ) {
+                        if( selectedAnswers[i] == questions[i].correct ) {
                           score++;
                         }
                       }
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text( "You scored $score/5 correct!" ),
+                          content: Text( "You got $score/5 correct in ${formatTime()}!" ),
                           action: SnackBarAction( label: "OK", onPressed: () {} ),
-                          behavior: SnackBarBehavior.floating,
+                          behavior: SnackBarBehavior.floating
                         )
                       );
                     },
@@ -315,7 +311,7 @@ Format each question with the question in square brackets, each of the 4 answer 
                     SnackBar(
                       content: Text( "Please wait until speaking ends" ),
                       action: SnackBarAction( label: "OK", onPressed: () {} ),
-                      behavior: SnackBarBehavior.floating,
+                      behavior: SnackBarBehavior.floating
                     )
                   )
                   : speakSentence( entry.key ),
@@ -335,31 +331,31 @@ Format each question with the question in square brackets, each of the 4 answer 
                     RadioListTile(
                       groupValue: selectedAnswers[ entry.key ],
                       onChanged: (value) => setState( () => selectedAnswers[ entry.key ] = value ),
-                      title: Text( entry.value.options[0] ),
-                      value: entry.value.options[0]
+                      title: Text( entry.value.choices[0] ),
+                      value: entry.value.choices[0]
                     ),
                     RadioListTile(
                       groupValue: selectedAnswers[ entry.key ],
                       onChanged: (value) => setState( () => selectedAnswers[ entry.key ] = value ),
-                      title: Text( entry.value.options[1] ),
-                      value: entry.value.options[1]
+                      title: Text( entry.value.choices[1] ),
+                      value: entry.value.choices[1]
                     ),
                     RadioListTile(
                       groupValue: selectedAnswers[ entry.key ],
                       onChanged: (value) => setState( () => selectedAnswers[ entry.key ] = value ),
-                      title: Text( entry.value.options[2] ),
-                      value: entry.value.options[2]
+                      title: Text( entry.value.choices[2] ),
+                      value: entry.value.choices[2]
                     ),
                     RadioListTile(
                       groupValue: selectedAnswers[ entry.key ],
                       onChanged: (value) => setState( () => selectedAnswers[ entry.key ] = value ),
-                      title: Text( entry.value.options[3] ),
-                      value: entry.value.options[3]
+                      title: Text( entry.value.choices[3] ),
+                      value: entry.value.choices[3]
                     )
                   ]
                 )
               ).toList()
-            ),
+            )
           )
         ] 
       )
