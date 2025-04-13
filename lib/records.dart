@@ -24,6 +24,18 @@ enum Difficulty {
   }
 }
 
+class MCQ {
+  final String question;
+  final List<String> options;
+  final String correctAnswer;
+
+  MCQ(
+    this.question,
+    this.options,
+    this.correctAnswer,
+  );
+}
+
 class Record {
   final String topic;
   final Difficulty difficulty;
@@ -110,8 +122,9 @@ class _DecipherState extends State<Decipher> {
   List<String> convo = [];
   int currSentence = -1;
   Duration elapsedTime = Duration.zero;
-  bool gettingConvo = true;
+  bool isGenerating = true;
   bool isSpeaking = false;
+  List<MCQ> questions = [];
   bool showTimer = false;
   late Timer timer;
   final tts = FlutterTts();
@@ -124,19 +137,27 @@ class _DecipherState extends State<Decipher> {
     return "$minutes:$seconds:$milliseconds";
   }
 
-  void getConvo( String prompt ) async {
+  void getConvoAndQuestions() async {
     final model = GenerativeModel(
         model: 'gemini-1.5-flash-latest',
         apiKey: apiKey
     );
 
-    final content = [ Content.text(prompt) ];
-    final response = await model.generateContent(content);
+    String prompt =
+"""
+Create a conversation between Bea and Jay about ${widget.topic}.
+Start off with societally expected formalities.
+Use basic conversational language.
+Display each sentence in ${widget.foreignLanguage} in square brackets like so:
+Jay: [${widget.foreignLanguage} sentence]
+Bea: [${widget.foreignLanguage} sentence]
+""";
 
-    final lines = response.text!.split('\n');
-    final re = RegExp( r'\[(.*?)\]' );
+    String response =( await model.generateContent( [ Content.text( prompt ) ] ) ).text!;
 
-    convo.clear();
+    List<String> lines = response.split('\n');
+    RegExp re = RegExp( r'\[(.*?)\]' );
+
     for( String line in lines ) {
       if( line.startsWith( "Bea: " ) || line.startsWith( "Jay: " ) ) {
         final matches = re.allMatches(line);
@@ -146,10 +167,52 @@ class _DecipherState extends State<Decipher> {
       }
     }
 
-    gettingConvo = false;
+    prompt = """
+$response
+
+Create 5 multiple choice questions about the conversation above in ${widget.nativeLanguage}.
+Ensure all content below is written in ${widget.nativeLanguage}.
+Format each question with the question in square brackets, each of the 4 answer choice in angle brackets, and the correct choice in curly braces, like so:
+[Question]
+<Answer choice>
+<Answer choice>
+<Answer choice>
+<Answer choice>
+{Correct choice}
+
+[Question]
+<Answer choice>
+<Answer choice>
+<Answer choice>
+<Answer choice>
+{Correct choice}
+""";
+
+    response =( await model.generateContent( [ Content.text( prompt ) ] ) ).text!;
+    List<String> parts = response.split('\n\n');
+
+    for( String part in parts ) {
+      lines = part.split('\n');
+      String questionText = lines[0].substring(1, lines[0].length - 1);
+
+      List<String> options = [];
+      String correctAnswer = "";
+
+      for( int i = 1; i < lines.length; i++ ) {
+        if( lines[i].startsWith('<') && lines[i].endsWith('>') ) {
+          options.add( lines[i].substring( 1, lines[i].length - 1 ) );
+        } else if( lines[i].startsWith('{') && lines[i].endsWith('}') ) {
+          correctAnswer = lines[i].substring( 1, lines[i].length - 1 );
+        }
+      }
+
+      questions.add( MCQ( questionText, options, correctAnswer ) );
+    }
+
+    isGenerating = false;
   }
 
-   void speakSentence( int i ) async {    
+  void speakSentence( int i ) async {    
     currSentence = i;
 
     final voices = await tts.getVoices;
@@ -174,25 +237,16 @@ class _DecipherState extends State<Decipher> {
     tts.setStartHandler( () => setState( () => isSpeaking = true ) );
     tts.setCompletionHandler( () => setState( () => isSpeaking = false ) );
 
-    getConvo(
-"""
-Create a conversation between Bea and Jay about ${widget.topic}.
-Start off with societally expected formalities.
-Use basic conversational language.
-Display each sentence in ${widget.foreignLanguage} in square brackets like so:
-Jay: [${widget.foreignLanguage} sentence]
-Bea: [${widget.foreignLanguage} sentence]
-"""
-    );
+    getConvoAndQuestions();
     startStopwatch();
   }
 
   @override
   void dispose() async {
-    timer.cancel();
-    await tts.stop();
-
     super.dispose();
+
+    timer.cancel();
+    if( isSpeaking ) await tts.stop();
   }
 
   @override
@@ -231,7 +285,7 @@ Bea: [${widget.foreignLanguage} sentence]
         automaticallyImplyLeading: false,
         title: Text( showTimer ? formatTime() : "Deciphering Record" )
       ),
-      body: gettingConvo ? Center(
+      body: isGenerating ? Center(
         child: CircularProgressIndicator.adaptive()
       ) : ListView(
         children: convo.asMap().entries.map(
