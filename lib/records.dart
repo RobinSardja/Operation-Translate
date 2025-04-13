@@ -131,7 +131,7 @@ class _DecipherState extends State<Decipher> {
     final seconds = elapsedTime.inSeconds.remainder(60).toString().padLeft( 2, '0' );
     final milliseconds = ( elapsedTime.inMilliseconds.remainder(1000) / 10 ).toStringAsFixed(0).padLeft( 2, '0' );
 
-    return "$minutes:$seconds:$milliseconds";
+    return "$minutes:$seconds.$milliseconds";
   }
 
   void getConvoAndQuestions() async {
@@ -306,6 +306,7 @@ Format each question with the question in square brackets, each of the 4 answer 
             child: ListView(
               children: convo.asMap().entries.map(
                 (entry) => ListTile(
+                  leading: Icon( entry.key % 2 == 0 ? Icons.male : Icons.female ),
                   onTap: () => isSpeaking ?
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -323,11 +324,12 @@ Format each question with the question in square brackets, each of the 4 answer 
           ),
           Expanded(
             flex: 1,
-            child: ListView(
+            child: PageView(
               children: questions.asMap().entries.map(
                 (entry) => Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Center( child: Text( "(${entry.key + 1}) ${entry.value.question}" ) ),
+                    Text( "(${entry.key + 1}) ${entry.value.question}", textAlign: TextAlign.center ),
                     RadioListTile(
                       groupValue: selectedAnswers[ entry.key ],
                       onChanged: (value) => setState( () => selectedAnswers[ entry.key ] = value ),
